@@ -2,32 +2,54 @@ package movieApi
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
 
-	"github.com/gocolly/colly"
+	"github.com/PuerkitoBio/goquery"
 )
 
+type Movie struct {
+	ImdbId string `json:"imdbId"`
+	Title  string `json:"title"`
+}
+
+var Movies []Movie
+
+func checkError(error error) {
+	if error != nil {
+		fmt.Printf("error: %v\n", error)
+		log.Fatal(error)
+	}
+}
+
 func Query(q string) {
-	c := colly.NewCollector(colly.AllowedDomains("www.imdb.com"))
 
-	c.OnHTML("#main", func(h *colly.HTMLElement) {
-		text := h.ChildAttr("h1", "class")
-		fmt.Print(text)
+	// Remove whitespace
+	q = strings.ReplaceAll(q, " ", "+")
 
+	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&s=tt&ref_=fn_al_tt_mr", q)
+
+	res, err := http.Get(url)
+	checkError(err)
+	defer res.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	checkError(err)
+
+	doc.Find(".findResult>.result_text").Each(func(i int, s *goquery.Selection) {
+		if i < 10 {
+			title := s.Find("a").Text()
+			// img, _ := s.Find("img").Attr("src") //Todo: implement IMG src parser
+			itemUrl, _ := s.Find("a").Attr("href")
+			id := strings.Replace(itemUrl, "/title/", "", 1)
+			id = strings.Replace(id, "/?ref_=fn_tt_tt_", "", 1)
+			id = id[0 : len(id)-1]
+
+			// fmt.Print(img)
+
+			Movies = append(Movies, Movie{Title: title, ImdbId: id})
+
+		}
 	})
-	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&ref_=nv_sr_sm", q)
-	c.Visit(url)
-
-	// c := colly.NewCollector(colly.AllowedDomains("www.imdb.com"))
-	// c.OnHTML("#main", func(h *colly.HTMLElement) {
-	// 	heading := h.ChildAttr("h1", "class")
-	// 	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&ref_=nv_sr_sm", q)
-	// 	content := h.ChildText("p") // todo: doesn't parse correct element
-	// 	newArticle := Article{Id: fmt.Sprint(len(Articles) + 1), Title: heading, Desc: url, Content: content}
-
-	// 	Articles = append(Articles, newArticle)
-	// },
-	// )
-	// url := fmt.Sprintf("https://www.imdb.com/find?q=%s&ref_=nv_sr_sm", q)
-	// c.Visit(url)
-	// return url
 }

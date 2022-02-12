@@ -29,6 +29,6 @@ func handleRequests() {
 func main() {
 
 	// handleRequests()
-	movieApi.Query("avengers")
+	movieApi.Query("the avengers")
 
 }
