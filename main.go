@@ -19,16 +19,16 @@ func handleRequests() {
 	port := ":8000"
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homePage)
-	router.HandleFunc("/articles", movieApi.ReturnAllArticles)
-	router.HandleFunc("/articles/{id}", movieApi.ReturnSingleArticle)
-	router.HandleFunc("/query/{q}", movieApi.ReturnQueryResult)
+	router.HandleFunc("/movies", movieApi.ReturnAllMovies)
+	router.HandleFunc("/movies/{id}", movieApi.ReturnSingleMovie)
+	router.HandleFunc("/query/{q}", movieApi.ReturnQuery)
 	fmt.Printf("Running on: http://localhost%s \n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
 
 func main() {
 
-	// handleRequests()
-	movieApi.Query("the avengers")
+	handleRequests()
+	// movieApi.Query("the avengers")
 
 }

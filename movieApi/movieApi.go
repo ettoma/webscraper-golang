@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gocolly/colly"
 	"github.com/gorilla/mux"
 )
 
@@ -41,23 +40,11 @@ func Get_input() string {
 	return query
 }
 
-func Query_url(q string) string {
-	c := colly.NewCollector(colly.AllowedDomains("www.imdb.com"))
-	c.OnHTML("#main", func(h *colly.HTMLElement) {
-		heading := h.ChildAttr("h1", "class")
-		url := fmt.Sprintf("https://www.imdb.com/find?q=%s&ref_=nv_sr_sm", q)
-		content := h.ChildText("p") // todo: doesn't parse correct element
-		newArticle := Article{Id: fmt.Sprint(len(Articles) + 1), Title: heading, Desc: url, Content: content}
-
-		Articles = append(Articles, newArticle)
-	},
-	)
-	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&ref_=nv_sr_sm", q)
-	c.Visit(url)
-	return url
+func Query_url(q string) {
+	fmt.Print(Query(q))
 }
 
-func ReturnSingleArticle(w http.ResponseWriter, r *http.Request) {
+func ReturnSingleMovie(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["id"]
 
@@ -68,17 +55,17 @@ func ReturnSingleArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ReturnQueryResult(w http.ResponseWriter, r *http.Request) {
+func ReturnQuery(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["q"]
 
-	url := Query_url(key)
-	fmt.Print(url)
-	fmt.Fprintf(w, url)
+	var queryResult = Query(key) //!TODO : only prints the first query performed
+	fmt.Fprintf(w, queryResult[0].Title)
+	// fmt.Fprintf(w, url)
 
 }
 
-func ReturnAllArticles(w http.ResponseWriter, r *http.Request) {
+func ReturnAllMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint: return all articles")
 	json.NewEncoder(w).Encode(Articles)
 }

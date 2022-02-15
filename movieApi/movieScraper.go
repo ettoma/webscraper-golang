@@ -12,6 +12,7 @@ import (
 type Movie struct {
 	ImdbId string `json:"imdbId"`
 	Title  string `json:"title"`
+	Image  string `json:"image"`
 }
 
 var Movies []Movie
@@ -23,7 +24,7 @@ func checkError(error error) {
 	}
 }
 
-func Query(q string) {
+func Query(q string) []Movie {
 
 	// Remove whitespace
 	q = strings.ReplaceAll(q, " ", "+")
@@ -37,19 +38,29 @@ func Query(q string) {
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	checkError(err)
 
+	var imageUrl []string
+
+	doc.Find(".findResult>.primary_photo").Each(func(i int, s *goquery.Selection) {
+		if i < 10 {
+			itemImg, _ := s.Find("img").Attr("src")
+			itemImg = strings.Replace(itemImg, "UX32_CR0,0,32,44", "UX1024_CR0,0,1024,1500", 1) // 1024H x 1500H
+			imageUrl = append(imageUrl, itemImg)
+		}
+	})
+
 	doc.Find(".findResult>.result_text").Each(func(i int, s *goquery.Selection) {
 		if i < 10 {
 			title := s.Find("a").Text()
-			// img, _ := s.Find("img").Attr("src") //Todo: implement IMG src parser
 			itemUrl, _ := s.Find("a").Attr("href")
 			id := strings.Replace(itemUrl, "/title/", "", 1)
 			id = strings.Replace(id, "/?ref_=fn_tt_tt_", "", 1)
 			id = id[0 : len(id)-1]
 
-			// fmt.Print(img)
-
-			Movies = append(Movies, Movie{Title: title, ImdbId: id})
+			Movies = append(Movies, Movie{Title: title, ImdbId: id, Image: imageUrl[i]})
 
 		}
 	})
+
+	return Movies
+
 }
