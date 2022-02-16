@@ -16,6 +16,7 @@ type Movie struct {
 }
 
 var Movies []Movie
+var imageUrl []string
 
 func checkError(error error) {
 	if error != nil {
@@ -25,6 +26,10 @@ func checkError(error error) {
 }
 
 func Query(q string) []Movie {
+
+	//make sure slice is empty
+	Movies = nil
+	imageUrl = nil
 
 	// Remove whitespace
 	q = strings.ReplaceAll(q, " ", "+")
@@ -37,8 +42,6 @@ func Query(q string) []Movie {
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	checkError(err)
-
-	var imageUrl []string
 
 	doc.Find(".findResult>.primary_photo").Each(func(i int, s *goquery.Selection) {
 		if i < 10 {
