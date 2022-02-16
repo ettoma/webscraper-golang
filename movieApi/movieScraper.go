@@ -34,7 +34,7 @@ func Query(q string) []Movie {
 	// Remove whitespace
 	q = strings.ReplaceAll(q, " ", "+")
 
-	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&s=tt&ref_=fn_al_tt_mr", q)
+	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&s=tt", q)
 
 	res, err := http.Get(url)
 	checkError(err)
@@ -65,5 +65,29 @@ func Query(q string) []Movie {
 	})
 
 	return Movies
+
+}
+
+func QuerySingleMovie(id string) {
+
+	url := fmt.Sprintf("https://www.imdb.com/title/%s", id)
+
+	res, err := http.Get(url)
+	checkError(err)
+	defer res.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	checkError(err)
+
+	var foundMovie []Movie
+
+	// TODO: doesn't work
+	doc.Find("TitleBlock_Container>.TitleBlock__TitleContainer").Each(func(i int, s *goquery.Selection) {
+
+		movieTitle := s.Find("h1").Text()
+		fmt.Print(movieTitle)
+
+		foundMovie = append(foundMovie, Movie{Title: movieTitle, ImdbId: id, Image: "ok"})
+	})
 
 }

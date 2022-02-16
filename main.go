@@ -10,18 +10,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Welcome to the homepage")
-	fmt.Println("Endpoint: home page")
-}
-
 func handleRequests() {
 	port := ":8000"
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", homePage)
+	router.HandleFunc("/", movieApi.HomePage)
 	router.HandleFunc("/movies", movieApi.ReturnAllMovies)
-	router.HandleFunc("/movies/{id}", movieApi.ReturnSingleMovie)
-	router.HandleFunc("/query/{q}", movieApi.ReturnQuery)
+	router.HandleFunc("/movies/id={id}", movieApi.ReturnSingleMovie)
+	router.HandleFunc("/movies/q={q}", movieApi.ReturnMoviesFromQuery)
 	fmt.Printf("Running on: http://localhost%s \n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
