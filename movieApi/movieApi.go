@@ -19,9 +19,9 @@ func ReturnSingleMovie(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	// var movieData = QuerySingleMovie(id)
-	QuerySingleMovie(id)
-	// json.NewEncoder(w).Encode(movieData)
+	var movieData = QuerySingleMovie(id)
+	// QuerySingleMovie(id)
+	json.NewEncoder(w).Encode(movieData)
 
 	// tt0848228
 

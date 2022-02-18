@@ -15,8 +15,17 @@ type Movie struct {
 	Image  string `json:"image"`
 }
 
+type MovieDetails struct {
+	ImdbId     string `json:"imdbId"`
+	Title      string `json:"title"`
+	Year       string `json:"year"`
+	Duration   string `json:"duration"`
+	ImdbRating string `json:"rating"`
+}
+
 var Movies []Movie
 var imageUrl []string
+var foundMovie []MovieDetails
 
 func checkError(error error) {
 	if error != nil {
@@ -51,10 +60,10 @@ func Query(q string) []Movie {
 		}
 	})
 
-	doc.Find(".findResult>.result_text").Each(func(i int, s *goquery.Selection) {
+	doc.Find(".findResult").Each(func(i int, s *goquery.Selection) {
 		if i < 10 {
-			title := s.Find("a").Text()
-			itemUrl, _ := s.Find("a").Attr("href")
+			title := s.Find(".result_text>a").Text()
+			itemUrl, _ := s.Find(".result_text>a").Attr("href")
 			id := strings.Replace(itemUrl, "/title/", "", 1)
 			id = strings.Replace(id, "/?ref_=fn_tt_tt_", "", 1)
 			id = id[0 : len(id)-1]
@@ -68,7 +77,9 @@ func Query(q string) []Movie {
 
 }
 
-func QuerySingleMovie(id string) {
+func QuerySingleMovie(id string) MovieDetails {
+
+	foundMovie = nil
 
 	url := fmt.Sprintf("https://www.imdb.com/title/%s", id)
 
@@ -79,15 +90,18 @@ func QuerySingleMovie(id string) {
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	checkError(err)
 
-	var foundMovie []Movie
-
-	// TODO: doesn't work
-	doc.Find("TitleBlock_Container>.TitleBlock__TitleContainer").Each(func(i int, s *goquery.Selection) {
+	doc.Find(".TitleBlock__Container-sc-1nlhx7j-0>.TitleBlock__TitleContainer-sc-1nlhx7j-1").Each(func(i int, s *goquery.Selection) {
 
 		movieTitle := s.Find("h1").Text()
-		fmt.Print(movieTitle)
+		year := s.Find("span").Text()
+		year = year[0:4]
 
-		foundMovie = append(foundMovie, Movie{Title: movieTitle, ImdbId: id, Image: "ok"})
+		//TODO: implement duration
+		duration := s.Find("li").Text()
+
+		foundMovie = append(foundMovie, MovieDetails{Title: movieTitle, ImdbId: id, Year: year, Duration: duration})
 	})
+
+	return foundMovie[0]
 
 }
