@@ -13,10 +13,11 @@ import (
 func handleRequests() {
 	port := ":8000"
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", movieApi.HomePage)
-	router.HandleFunc("/movies", movieApi.ReturnAllMovies)
-	router.HandleFunc("/movies/id={id}", movieApi.ReturnSingleMovie)
-	router.HandleFunc("/movies/q={q}", movieApi.ReturnMoviesFromQuery)
+	router.HandleFunc("/", movieApi.HomePage).Methods("GET")
+	router.HandleFunc("/movies", movieApi.ReturnAllMovies).Methods("GET")
+	router.HandleFunc("/movies/id={id}", movieApi.ReturnSingleMovie).Methods("GET")
+	router.HandleFunc("/movies/id={id}", movieApi.PostSingleMovie).Methods("POST")
+	router.HandleFunc("/movies/q={q}", movieApi.ReturnMoviesFromQuery).Methods("GET")
 	fmt.Printf("Running on: http://localhost%s \n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
@@ -24,6 +25,5 @@ func handleRequests() {
 func main() {
 
 	handleRequests()
-	// movieApi.Query("the avengers")
 
 }

@@ -23,24 +23,16 @@ type MovieDetails struct {
 	ImdbRating string `json:"rating"`
 }
 
-var Movies []Movie
-var imageUrl []string
-var foundMovie []MovieDetails
-
 func checkError(error error) {
 	if error != nil {
-		fmt.Printf("error: %v\n", error)
-		log.Fatal(error)
+		log.Fatalln("Error: ", error)
 	}
 }
 
-func Query(q string) []Movie {
+func QueryAllMovies(q string) []Movie {
+	var Movies []Movie
 
-	//make sure slice is empty
-	Movies = nil
-	imageUrl = nil
-
-	// Remove whitespace
+	// Remove whitespace from query if any
 	q = strings.ReplaceAll(q, " ", "+")
 
 	url := fmt.Sprintf("https://www.imdb.com/find?q=%s&s=tt", q)
@@ -52,23 +44,21 @@ func Query(q string) []Movie {
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	checkError(err)
 
-	doc.Find(".findResult>.primary_photo").Each(func(i int, s *goquery.Selection) {
-		if i < 10 {
-			itemImg, _ := s.Find("img").Attr("src")
-			itemImg = strings.Replace(itemImg, "UX32_CR0,0,32,44", "UX1024_CR0,0,1024,1500", 1) // 1024H x 1500H
-			imageUrl = append(imageUrl, itemImg)
-		}
-	})
-
 	doc.Find(".findResult").Each(func(i int, s *goquery.Selection) {
 		if i < 10 {
 			title := s.Find(".result_text>a").Text()
+
 			itemUrl, _ := s.Find(".result_text>a").Attr("href")
+
 			id := strings.Replace(itemUrl, "/title/", "", 1)
 			id = strings.Replace(id, "/?ref_=fn_tt_tt_", "", 1)
 			id = id[0 : len(id)-1]
 
-			Movies = append(Movies, Movie{Title: title, ImdbId: id, Image: imageUrl[i]})
+			itemImgContainer := s.Find(".primary_photo")
+			itemImg, _ := itemImgContainer.Find("img").Attr("src")
+			itemImg = strings.Replace(itemImg, "UX32_CR0,0,32,44", "UX1024_CR0,0,1024,1500", 1)
+
+			Movies = append(Movies, Movie{Title: title, ImdbId: id, Image: itemImg})
 
 		}
 	})
@@ -79,7 +69,10 @@ func Query(q string) []Movie {
 
 func QuerySingleMovie(id string) MovieDetails {
 
-	foundMovie = nil
+	var movieTitle string
+	var yearText string
+	var durationText string
+	var foundRating string
 
 	url := fmt.Sprintf("https://www.imdb.com/title/%s", id)
 
@@ -90,18 +83,31 @@ func QuerySingleMovie(id string) MovieDetails {
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	checkError(err)
 
-	doc.Find(".TitleBlock__Container-sc-1nlhx7j-0>.TitleBlock__TitleContainer-sc-1nlhx7j-1").Each(func(i int, s *goquery.Selection) {
+	doc.Find(".RatingBar__RatingContainer-sc-85l9wd-0").Each(func(i int, s *goquery.Selection) {
 
-		movieTitle := s.Find("h1").Text()
-		year := s.Find("span").Text()
-		year = year[0:4]
+		foundRating = s.Find("span").First().Text()
+		if len(foundRating) != 0 {
 
-		//TODO: implement duration
-		duration := s.Find("li").Text()
+			foundRating = foundRating[0:3]
+		}
 
-		foundMovie = append(foundMovie, MovieDetails{Title: movieTitle, ImdbId: id, Year: year, Duration: duration})
 	})
 
-	return foundMovie[0]
+	doc.Find(".TitleBlock__Container-sc-1nlhx7j-0>.TitleBlock__TitleContainer-sc-1nlhx7j-1").Each(func(i int, s *goquery.Selection) {
+
+		movieTitle = s.Find("h1").Text()
+		year := s.Find("span")
+		yearText = year.First().Text()
+
+		duration := s.Find("li")
+		durationText = duration.Last().Text()
+
+	})
+
+	doc.Find(".Storyline__StorylineWrapper-sc-1b58ttw-0").Each(func(i int, s *goquery.Selection) {
+		// fmt.Print(s.Find("div").First().Text())
+	})
+
+	return MovieDetails{Title: movieTitle, ImdbId: id, Year: yearText, Duration: durationText, ImdbRating: foundRating}
 
 }

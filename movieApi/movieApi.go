@@ -20,10 +20,8 @@ func ReturnSingleMovie(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var movieData = QuerySingleMovie(id)
-	// QuerySingleMovie(id)
-	json.NewEncoder(w).Encode(movieData)
 
-	// tt0848228
+	json.NewEncoder(w).Encode(movieData)
 
 }
 
@@ -33,7 +31,7 @@ func ReturnMoviesFromQuery(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var queryResults = Query(key)
+	var queryResults = QueryAllMovies(key)
 
 	json.NewEncoder(w).Encode(queryResults)
 
@@ -41,4 +39,10 @@ func ReturnMoviesFromQuery(w http.ResponseWriter, r *http.Request) {
 
 func ReturnAllMovies(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func PostSingleMovie(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	fmt.Print(QuerySingleMovie(vars["id"]))
 }
